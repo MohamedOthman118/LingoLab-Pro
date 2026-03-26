@@ -334,8 +334,6 @@
                     btn.style.backgroundColor = "var(--secondary)";
                     btn.style.color = "white";
                     btn.classList.remove("pulse-animation");
-                    
-                    // We DO NOT stop the stream tracks anymore so it remembers permission
                 };
 
                 mediaRecorder.start();
@@ -355,7 +353,7 @@
             try {
                 stream = await initMic();
             } catch (err) {
-                return; // Error already handled in initMic
+                return; 
             }
 
             window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -718,7 +716,10 @@
                 });
                 
                 html += `</div>
-                    <button class="feedback-btn" style="background: #4f46e5;" onclick="checkDialogueAnswers(this)">✅ Check My Answers</button>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button class="feedback-btn" style="background: #4f46e5;" onclick="checkDialogueAnswers(this)">✅ Check My Answers</button>
+                        <button class="feedback-btn" style="background: var(--text-muted);" onclick="showDialogueAnswers(this)">👀 Show Answers</button>
+                    </div>
                 </div>`;
             }
 
@@ -759,9 +760,9 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // --- Business Dialogue Check Logic ---
+        // --- Business Dialogue Check & Reveal Logic ---
         function checkDialogueAnswers(btn) {
-            const container = btn.parentElement;
+            const container = btn.parentElement.parentElement;
             const inputs = container.querySelectorAll('.dialogue-input');
             let allCorrect = true;
 
@@ -782,17 +783,33 @@
                 }
             });
 
+            const originalText = btn.innerHTML;
             if(allCorrect && inputs.length > 0) {
                 btn.innerHTML = "🎉 Perfect!";
                 btn.style.backgroundColor = "var(--secondary)";
             } else {
-                btn.innerHTML = "Try Again! Check your spelling.";
+                btn.innerHTML = "Try Again! Check spelling.";
             }
 
             setTimeout(() => {
-                btn.innerHTML = "✅ Check My Answers";
+                btn.innerHTML = originalText;
                 btn.style.backgroundColor = "#4f46e5";
             }, 3000);
+        }
+
+        function showDialogueAnswers(btn) {
+            const container = btn.parentElement.parentElement;
+            const inputs = container.querySelectorAll('.dialogue-input');
+
+            inputs.forEach(input => {
+                const correctAns = input.getAttribute('data-answer');
+                input.value = correctAns;
+                
+                // Style to show these are revealed answers
+                input.style.borderColor = "var(--primary)";
+                input.style.backgroundColor = "var(--accent-bg)";
+                input.style.color = "var(--primary)";
+            });
         }
 
         function checkAnswer(btn, isCorrect) {
@@ -866,7 +883,7 @@
                 try {
                     stream = await initMic();
                 } catch (err) {
-                    return; // Error handled inside initMic
+                    return; 
                 }
                 
                 mainRecognition = new window.SpeechRecognition(); mainRecognition.continuous = true; mainRecognition.interimResults = true;
